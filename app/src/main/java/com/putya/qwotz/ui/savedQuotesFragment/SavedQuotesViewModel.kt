@@ -1,0 +1,49 @@
+package com.putya.qwotz.ui.savedQuotesFragment
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.putya.qwotz.data.FetchedQuotesData
+import com.putya.qwotz.data.QuotesData
+import com.putya.qwotz.data.repository.QuotesRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+
+@HiltViewModel
+class SavedQuotesViewModel @Inject constructor(
+    private val repository: QuotesRepository
+) : ViewModel() {
+
+    fun getSavedQuotes(): LiveData<List<QuotesData>> {
+        return repository.getAllSavedQuotes()
+    }
+
+    fun deleteQuote(quote: QuotesData) {
+        viewModelScope.launch {
+            repository.deleteSavedQuote(quote.quoteText)
+
+            val fetchedQuote = FetchedQuotesData(
+                id = quote.id,
+                _id = quote._id,
+                quoteAuthor = quote.quoteAuthor,
+                quoteText = quote.quoteText,
+                quoteGenre = quote.quoteGenre,
+                isBookmarked = false
+            )
+            
+            repository.updateFetchedQuote(fetchedQuote)
+        }
+    }
+
+    private val mutableCopyQuote = MutableLiveData<String>()
+    val copyQuote: LiveData<String> get() = mutableCopyQuote
+
+
+    fun copyQuote(quoteText : String){
+        mutableCopyQuote.value = quoteText
+    }
+
+}
